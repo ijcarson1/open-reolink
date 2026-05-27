@@ -13,8 +13,8 @@ import VLCKit
 /// - RTSP over TCP via `:rtsp-tcp` (ADR-0003 — UDP is unreliable on Wi-Fi)
 /// - Network caching tuned for low-latency LAN (300ms)
 /// - State changes mapped from `VLCMediaPlayerState` to our `StreamState`
-/// - Reconnect-on-error scheduling is handled at the next layer up via
-///   `StreamReconnectScheduler` — `.failed` is the trigger
+/// - Auto-reconnect on unexpected `.stopped` / `.ended` / `.error` via
+///   `StreamReconnectScheduler` (1s → 2s → 4s → 8s, capped at 8s)
 public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDelegate, @unchecked Sendable {
     public let camera: Camera
     public let quality: StreamQuality
@@ -23,6 +23,10 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
     private let subject = CurrentValueSubject<StreamState, Never>(.idle)
     private var player: VLCMediaPlayer?
     private var ownedRenderTarget: VLCRenderTarget?
+    private let scheduler = StreamReconnectScheduler()
+    private var reconnectTask: Task<Void, Never>?
+    private var hasReachedPlaying = false
+    private var explicitlyStopped = false
 
     public var state: AnyPublisher<StreamState, Never> {
         subject.eraseToAnyPublisher()
@@ -36,34 +40,22 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
     }
 
     public func attach(to renderTarget: StreamRenderTarget) async throws {
-        guard let url = reolinkRTSPURL(for: camera, password: password, quality: quality) else {
-            subject.send(.failed("Could not construct RTSP URL"))
-            return
-        }
         guard let target = renderTarget as? VLCRenderTarget else {
             subject.send(.failed("Unsupported render target — VLCRenderTarget required"))
             return
         }
-
-        // Setup on the main thread — VLCVideoView is an AppKit NSView.
         await MainActor.run {
-            let media = VLCMedia(url: url)
-            media.addOption(":rtsp-tcp")
-            media.addOption(":network-caching=300")
-
-            let player = VLCMediaPlayer()
-            player.media = media
-            player.drawable = target.videoView
-            player.delegate = self
-            self.player = player
+            self.explicitlyStopped = false
             self.ownedRenderTarget = target
-            self.subject.send(.connecting)
-            player.play()
+            self.startPlayback()
         }
     }
 
     public func stop() {
         Task { @MainActor in
+            self.explicitlyStopped = true
+            self.reconnectTask?.cancel()
+            self.reconnectTask = nil
             self.player?.stop()
             self.player = nil
             self.ownedRenderTarget = nil
@@ -71,21 +63,82 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
         }
     }
 
+    @MainActor
+    private func startPlayback() {
+        guard let target = ownedRenderTarget,
+              let url = reolinkRTSPURL(for: camera, password: password, quality: quality)
+        else {
+            subject.send(.failed("Could not construct RTSP URL"))
+            return
+        }
+        let media = VLCMedia(url: url)
+        media.addOption(":rtsp-tcp")
+        media.addOption(":network-caching=300")
+
+        let player = VLCMediaPlayer()
+        player.media = media
+        player.drawable = target.videoView
+        player.delegate = self
+        self.player = player
+        self.subject.send(.connecting)
+        player.play()
+    }
+
+    @MainActor
+    private func scheduleReconnect(reason: String) {
+        guard !explicitlyStopped, ownedRenderTarget != nil else { return }
+        reconnectTask?.cancel()
+        let delay = scheduler.nextDelay()
+        NSLog("openReolink: stream dropped for \(camera.displayName) (\(reason)); retrying in \(Int(delay))s")
+        subject.send(.reconnecting)
+        reconnectTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard let self, !Task.isCancelled else { return }
+            await MainActor.run {
+                self.startPlayback()
+            }
+        }
+    }
+
     // MARK: - VLCMediaPlayerDelegate
 
+    // VLCKit delivers delegate callbacks on the main thread (via the run-loop
+    // NSNotificationCenter), so we capture the relevant state up-front
+    // (Notification is not Sendable) and hop to MainActor for our own work.
     public func mediaPlayerStateChanged(_ notification: Notification) {
         guard let player = notification.object as? VLCMediaPlayer else { return }
-        let mapped: StreamState
-        switch player.state {
-        case .opening, .buffering: mapped = .connecting
-        case .playing: mapped = .playing
-        case .paused: mapped = .playing // user-paused isn't a state we surface yet
-        case .stopped, .ended: mapped = .ended
-        case .error: mapped = .failed("VLCKit reported \(VLCMediaPlayerStateToString(player.state))")
-        case .esAdded: return // intermediate
-        @unknown default: return
+        let snapshot = player.state
+        MainActor.assumeIsolated {
+            handleStateChange(snapshot)
         }
-        subject.send(mapped)
+    }
+
+    @MainActor
+    private func handleStateChange(_ playerState: VLCMediaPlayerState) {
+        switch playerState {
+        case .opening, .buffering:
+            subject.send(.connecting)
+        case .playing:
+            hasReachedPlaying = true
+            scheduler.reset()
+            subject.send(.playing)
+        case .paused:
+            subject.send(.playing)
+        case .stopped, .ended:
+            if explicitlyStopped {
+                subject.send(.ended)
+            } else {
+                scheduleReconnect(reason: hasReachedPlaying ? "stopped after playing" : "stopped before playing")
+            }
+        case .error:
+            let reason = VLCMediaPlayerStateToString(playerState)
+            subject.send(.failed("VLCKit reported \(reason)"))
+            scheduleReconnect(reason: "error: \(reason)")
+        case .esAdded:
+            return
+        @unknown default:
+            return
+        }
     }
 }
 

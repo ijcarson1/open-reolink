@@ -37,6 +37,18 @@ struct OpenRingApp: App {
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
+
+        // Per-camera detail window — resizable, opens via openWindow(value:),
+        // reused if already open for the same cameraId.
+        WindowGroup(for: UUID.self) { $cameraId in
+            if let cameraId {
+                CameraDetailView(cameraId: cameraId)
+                    .environmentObject(appState)
+                    .frame(minWidth: 560, minHeight: 360)
+            }
+        }
+        .windowResizability(.contentMinSize)
+        .defaultPosition(.center)
     }
 }
 

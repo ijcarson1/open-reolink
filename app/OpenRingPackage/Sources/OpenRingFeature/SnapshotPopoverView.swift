@@ -82,7 +82,10 @@ public struct SnapshotPopoverView: View {
                 onlineStatus: appState.onlineStatuses[camera.id] ?? .online,
                 lastSnapshot: appState.lastSnapshots[camera.id],
                 isHero: false,
-                onTap: { appState.enterHero(camera: camera) },
+                onTap: {
+                    NSApp.activate(ignoringOtherApps: true)
+                    openWindow(value: camera.id)
+                },
                 onReconnect: { appState.reconnect(cameraId: camera.id) },
                 onAttach: { target in
                     Task { [weak appState] in
