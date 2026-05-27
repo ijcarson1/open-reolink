@@ -41,26 +41,50 @@ public final class AddCameraFormModel: ObservableObject {
         isVerifying = true
         defer { isVerifying = false }
 
-        let camera = Camera(
-            displayName: displayName.trimmingCharacters(in: .whitespaces),
-            lanIP: lanIP,
-            kind: kind,
-            model: discoveredModel,
-            adminUsername: adminUsername,
-            eventsUsername: eventsUsername,
-            discoveredVia: discoveredVia
-        )
+        // Try HTTPS:443 first, then HTTP:80 — Reolink lets you disable HTTPS
+        // in the web UI, and a -1004 "cannot connect" on 443 usually means
+        // HTTPS is off rather than a wrong password.
+        let candidates: [(String, Int)] = [("https", 443), ("http", 80)]
+        var camera: Camera?
+        var lastError: String?
 
-        // Verify admin creds against the camera before persisting (per ADR-0005's
-        // "two passwords, role-keyed" model).
-        let cgi = ReolinkCGIClient(camera: camera, password: adminPassword)
-        do {
-            _ = try await cgi.fetchSnapshot()
-        } catch let error as CameraClientError {
-            errorMessage = describe(error)
-            return false
-        } catch {
-            errorMessage = error.localizedDescription
+        for (scheme, port) in candidates {
+            let attempt = Camera(
+                displayName: displayName.trimmingCharacters(in: .whitespaces),
+                lanIP: lanIP,
+                kind: kind,
+                cgiScheme: scheme,
+                cgiPort: port,
+                model: discoveredModel,
+                adminUsername: adminUsername,
+                eventsUsername: eventsUsername,
+                discoveredVia: discoveredVia
+            )
+            let cgi = ReolinkCGIClient(camera: attempt, password: adminPassword)
+            do {
+                _ = try await cgi.fetchSnapshot()
+                camera = attempt
+                break
+            } catch CameraClientError.unauthorized {
+                errorMessage = "Authentication failed — check the admin username and password."
+                return false
+            } catch CameraClientError.lockedOut {
+                errorMessage = "The camera is locked out by repeated failed logins. Wait ~5 minutes and try again."
+                return false
+            } catch CameraClientError.unreachable(let detail) {
+                lastError = detail
+                continue   // try next candidate
+            } catch let error as CameraClientError {
+                errorMessage = describe(error)
+                return false
+            } catch {
+                errorMessage = error.localizedDescription
+                return false
+            }
+        }
+
+        guard let camera else {
+            errorMessage = "Could not reach the camera at \(lanIP) on HTTPS:443 or HTTP:80. Confirm the IP is correct and the camera is on the same network. (\(lastError ?? "no response"))"
             return false
         }
 
