@@ -22,9 +22,14 @@ let package = Package(
             dependencies: []
         ),
 
+        .binaryTarget(
+            name: "VLCKit",
+            path: "Frameworks/VLCKit.xcframework"
+        ),
+
         .target(
             name: "ReolinkClient",
-            dependencies: []
+            dependencies: ["VLCKit"]
         ),
 
         .target(

@@ -59,3 +59,6 @@ playground.xcworkspace
 # Claude Code local state (skills restored from skills-lock.json on fresh checkout)
 .claude/
 .agents/
+
+# VLCKit binary (~409 MB) — restored by scripts/setup-vlckit.sh
+app/OpenRingPackage/Frameworks/VLCKit.xcframework/

@@ -44,12 +44,26 @@ Other Reolink models should work but are unverified; please report back.
 
 ## Build
 
+One-time setup — fetch the VLCKit binary (~88 MB compressed, ~409 MB extracted, gitignored):
+
+```bash
+./scripts/setup-vlckit.sh
+```
+
+Then build:
+
 ```bash
 cd app
 xcodebuild -scheme OpenRing -destination 'platform=macOS,arch=arm64' build
 ```
 
-VLCKit must be added to the Xcode project as a dynamically-linked binary xcframework. Download from [download.videolan.org/pub/cocoapods/prod/](https://download.videolan.org/pub/cocoapods/prod/). See [`NOTICE-VLCKit.md`](NOTICE-VLCKit.md) for LGPL §6 compliance notes.
+Run tests with VLCKit linked:
+
+```bash
+./scripts/test.sh
+```
+
+VLCKit is dynamically linked per LGPL §6 — see [`NOTICE-VLCKit.md`](NOTICE-VLCKit.md). Upgrading: edit `VERSION` and `EXPECTED_SHA256` in `scripts/setup-vlckit.sh`.
 
 ## License
 

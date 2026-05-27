@@ -1,37 +1,28 @@
 import Foundation
 import Combine
+import AppKit
+import VLCKit
 
-/// VLCKit-backed `StreamSession` for Reolink RTSP — per ADR-0003.
+/// VLCKit-backed `StreamSession` for Reolink RTSP, per ADR-0003.
 ///
-/// **State of integration (Slice 3):** the protocol, state machine, and
-/// reconnect scheduler are wired. The actual VLCKit playback is NOT linked yet
-/// because VLCKit ships as a binary CocoaPod / xcframework rather than a
-/// SwiftPM package — see the package-add path below. Until the binary is
-/// available, `attach(...)` transitions the session to `.failed` with a clear
-/// message instead of crashing, so the rest of the feature layer (and the
-/// integration test using `FakeStreamSession`) is unblocked.
+/// VLCKit is dynamically linked via SwiftPM `binaryTarget` (xcframework
+/// staged by `scripts/setup-vlckit.sh`). LGPL §6 compliance:
+/// `NOTICE-VLCKit.md` at the repo root.
 ///
-/// **To complete the wire-up (developer-local task):**
-/// 1. Download the latest stable VLCKit xcframework from
-///    https://download.videolan.org/pub/cocoapods/prod/ (or build from
-///    https://code.videolan.org/videolan/VLCKit)
-/// 2. Add it to the Xcode project as a dynamically-linked framework (LGPL §6
-///    requires dynamic linkage; static linking is GPL-contaminating)
-/// 3. Replace the `attach(...)` body below with VLCMediaPlayer construction:
-///    - `let media = VLCMedia(url: rtspURL)`
-///    - `media.addOptions([":rtsp-tcp": NSNull()])` (RTSP over TCP per ADR-0003)
-///    - bind to `renderTarget`, observe state via VLCMediaPlayerDelegate, map
-///      to `StreamState`
-/// 4. Ship VLCKit's source / build-instructions per LGPL §6 — add a
-///    `LICENSE-VLCKit` and a `NOTICE` file to repo root referencing the
-///    upstream source URL
-public final class ReolinkRTSPSession: StreamSession, @unchecked Sendable {
+/// Implementation details:
+/// - RTSP over TCP via `:rtsp-tcp` (ADR-0003 — UDP is unreliable on Wi-Fi)
+/// - Network caching tuned for low-latency LAN (300ms)
+/// - State changes mapped from `VLCMediaPlayerState` to our `StreamState`
+/// - Reconnect-on-error scheduling is handled at the next layer up via
+///   `StreamReconnectScheduler` — `.failed` is the trigger
+public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDelegate, @unchecked Sendable {
     public let camera: Camera
     public let quality: StreamQuality
 
     private let password: String
     private let subject = CurrentValueSubject<StreamState, Never>(.idle)
-    private let scheduler = StreamReconnectScheduler()
+    private var player: VLCMediaPlayer?
+    private var ownedRenderTarget: VLCRenderTarget?
 
     public var state: AnyPublisher<StreamState, Never> {
         subject.eraseToAnyPublisher()
@@ -41,6 +32,7 @@ public final class ReolinkRTSPSession: StreamSession, @unchecked Sendable {
         self.camera = camera
         self.password = password
         self.quality = quality
+        super.init()
     }
 
     public func attach(to renderTarget: StreamRenderTarget) async throws {
@@ -48,14 +40,64 @@ public final class ReolinkRTSPSession: StreamSession, @unchecked Sendable {
             subject.send(.failed("Could not construct RTSP URL"))
             return
         }
-        subject.send(.connecting)
-        // TODO(slice-3 follow-up): wire VLCKit here per the docstring. Until then,
-        // surface a clean failure state instead of silently doing nothing.
-        _ = url
-        subject.send(.failed("VLCKit not yet linked — see ReolinkRTSPSession.swift for setup"))
+        guard let target = renderTarget as? VLCRenderTarget else {
+            subject.send(.failed("Unsupported render target — VLCRenderTarget required"))
+            return
+        }
+
+        // Setup on the main thread — VLCVideoView is an AppKit NSView.
+        await MainActor.run {
+            let media = VLCMedia(url: url)
+            media.addOption(":rtsp-tcp")
+            media.addOption(":network-caching=300")
+
+            let player = VLCMediaPlayer()
+            player.media = media
+            player.drawable = target.videoView
+            player.delegate = self
+            self.player = player
+            self.ownedRenderTarget = target
+            self.subject.send(.connecting)
+            player.play()
+        }
     }
 
     public func stop() {
-        subject.send(.ended)
+        Task { @MainActor in
+            self.player?.stop()
+            self.player = nil
+            self.ownedRenderTarget = nil
+            self.subject.send(.ended)
+        }
+    }
+
+    // MARK: - VLCMediaPlayerDelegate
+
+    public func mediaPlayerStateChanged(_ notification: Notification) {
+        guard let player = notification.object as? VLCMediaPlayer else { return }
+        let mapped: StreamState
+        switch player.state {
+        case .opening, .buffering: mapped = .connecting
+        case .playing: mapped = .playing
+        case .paused: mapped = .playing // user-paused isn't a state we surface yet
+        case .stopped, .ended: mapped = .ended
+        case .error: mapped = .failed("VLCKit reported \(VLCMediaPlayerStateToString(player.state))")
+        case .esAdded: return // intermediate
+        @unknown default: return
+        }
+        subject.send(mapped)
+    }
+}
+
+/// Concrete `StreamRenderTarget` that wraps a `VLCVideoView` for the feature
+/// layer to insert into SwiftUI via an `NSViewRepresentable`.
+@MainActor
+public final class VLCRenderTarget: StreamRenderTarget {
+    public let videoView: VLCVideoView
+
+    public init() {
+        let view = VLCVideoView(frame: .zero)
+        view.fillScreen = true
+        self.videoView = view
     }
 }
