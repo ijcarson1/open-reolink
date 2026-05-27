@@ -145,9 +145,9 @@ public struct AddCameraForm: View {
                 Button("Cancel") { dismiss() }
                 Button {
                     Task {
-                        let ok = await model.submit(via: appState.service)
+                        let ok = await model.submit(via: appState.cameraService)
                         if ok {
-                            appState.reload()
+                            appState.reloadCameras()
                             dismiss()
                         }
                     }

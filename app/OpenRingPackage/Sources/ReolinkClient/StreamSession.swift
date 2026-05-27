@@ -32,8 +32,11 @@ public protocol StreamSession: AnyObject, Sendable {
 
 /// Opaque rendering surface — concrete impls choose between an
 /// `NSView`, an `AVSampleBufferDisplayLayer`, etc. without leaking the
-/// choice to callers.
-public protocol StreamRenderTarget: AnyObject {}
+/// choice to callers. Concrete impls are responsible for marshalling their
+/// AppKit-bound state onto the main thread (e.g. `VLCRenderTarget` is
+/// `@MainActor` but exposes a `Sendable` surface so the session protocol
+/// can be called from any actor).
+public protocol StreamRenderTarget: AnyObject, Sendable {}
 
 /// Builds the canonical Reolink RTSP URL for a given Camera and quality.
 public func reolinkRTSPURL(for camera: Camera, password: String, quality: StreamQuality) -> URL? {

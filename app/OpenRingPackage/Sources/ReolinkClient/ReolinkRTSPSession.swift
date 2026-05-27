@@ -91,10 +91,14 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
 
 /// Concrete `StreamRenderTarget` that wraps a `VLCVideoView` for the feature
 /// layer to insert into SwiftUI via an `NSViewRepresentable`.
-@MainActor
-public final class VLCRenderTarget: StreamRenderTarget {
+///
+/// `@unchecked Sendable` because every read/write of the underlying VLCVideoView
+/// happens on the main thread (the SwiftUI representable always runs on
+/// MainActor, and the session marshals its setup via `await MainActor.run`).
+public final class VLCRenderTarget: StreamRenderTarget, @unchecked Sendable {
     public let videoView: VLCVideoView
 
+    @MainActor
     public init() {
         let view = VLCVideoView(frame: .zero)
         view.fillScreen = true

@@ -93,6 +93,13 @@ public final class StreamViewModel: ObservableObject {
         states[id] = nil
     }
 
+    /// Hands a fresh render target (built by a SwiftUI representable) to the
+    /// session for that camera so playback can begin.
+    public func attachRenderTarget(_ target: StreamRenderTarget, to cameraId: UUID) async {
+        guard let session = sessions[cameraId] else { return }
+        try? await session.attach(to: target)
+    }
+
     // Test-only accessors — needed by integration tests to inspect lifecycle.
     public func activeSessionCount() -> Int { sessions.count }
     public func quality(for cameraId: UUID) -> StreamQuality? {

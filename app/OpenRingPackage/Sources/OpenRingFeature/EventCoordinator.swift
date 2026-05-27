@@ -1,5 +1,5 @@
 import Foundation
-import Combine
+@preconcurrency import Combine
 import ReolinkClient
 import Storage
 import UserNotifications
@@ -61,7 +61,7 @@ public actor EventCoordinator {
     private var failureCounts: [UUID: Int] = [:]
     private var lockoutUntil: [UUID: Date] = [:]
 
-    public let eventsPublisher = PassthroughSubject<CameraEvent, Never>()
+    nonisolated(unsafe) public let eventsPublisher = PassthroughSubject<CameraEvent, Never>()
 
     public init(
         source: CameraEventSource,

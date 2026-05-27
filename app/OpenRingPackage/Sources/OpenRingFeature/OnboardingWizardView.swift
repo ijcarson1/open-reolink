@@ -111,9 +111,9 @@ public struct OnboardingWizardView: View {
             case .credentials, .manual:
                 Button {
                     Task {
-                        let ok = await formModel.submit(via: appState.service)
+                        let ok = await formModel.submit(via: appState.cameraService)
                         if ok {
-                            appState.reload()
+                            appState.reloadCameras()
                             dismiss()
                         }
                     }

@@ -4,28 +4,43 @@ import ReolinkClient
 
 /// Renders a single Camera tile.
 ///
-/// Replaces Slice 1/2's snapshot-thumbnail view: the tile now binds to a
-/// `StreamState` from `StreamViewModel`, and the visible badge reflects
-/// connecting/reconnecting/failed states. Aspect ratio follows the Camera's
-/// kind — 16:9 for cameras, 9:16 for doorbells (per ADR-0001's vendor-neutral
-/// Camera type and the user-story "doorbell rendered in portrait").
+/// Live video via `VLCVideoNSView` once a `StreamSession` is attached.
+/// Offline + locked-out states surface a placeholder with a Reconnect button
+/// (per Slice 8). Aspect ratio is 9:16 for doorbells, 16:9 for cameras.
 public struct CameraTileView: View {
     public let camera: Camera
     public let state: StreamState
+    public let onlineStatus: OnlineStateTracker.Status
+    public let lastSnapshot: Data?
     public let isHero: Bool
-    public var onTap: (() -> Void)? = nil
+    public var onTap: (() -> Void)?
+    public var onReconnect: (() -> Void)?
+    public var onAttach: ((VLCRenderTarget) -> Void)?
 
-    public init(camera: Camera, state: StreamState, isHero: Bool = false, onTap: (() -> Void)? = nil) {
+    public init(
+        camera: Camera,
+        state: StreamState,
+        onlineStatus: OnlineStateTracker.Status = .online,
+        lastSnapshot: Data? = nil,
+        isHero: Bool = false,
+        onTap: (() -> Void)? = nil,
+        onReconnect: (() -> Void)? = nil,
+        onAttach: ((VLCRenderTarget) -> Void)? = nil
+    ) {
         self.camera = camera
         self.state = state
+        self.onlineStatus = onlineStatus
+        self.lastSnapshot = lastSnapshot
         self.isHero = isHero
         self.onTap = onTap
+        self.onReconnect = onReconnect
+        self.onAttach = onAttach
     }
 
     public var body: some View {
         ZStack {
             Color.black
-            placeholder
+            content
             connectionBadge
         }
         .aspectRatio(aspectRatio, contentMode: .fit)
@@ -48,19 +63,62 @@ public struct CameraTileView: View {
     }
 
     @ViewBuilder
-    private var placeholder: some View {
-        // Until VLCKit is linked, the stream layer falls through to a `.failed`
-        // state and we render a static placeholder so the rest of the UI is
-        // still inspectable. Slice 3 follow-up will replace this with the
-        // VLCKit-backed view representable.
-        Image(systemName: "video")
-            .font(.system(size: isHero ? 44 : 22))
-            .foregroundStyle(.white.opacity(0.15))
+    private var content: some View {
+        switch onlineStatus {
+        case .online:
+            videoSurface
+        case .offline:
+            offlinePlaceholder(message: "Camera offline")
+        case .lockedOut:
+            offlinePlaceholder(message: "Camera locked — wait ~5 min before retrying")
+        }
+    }
+
+    @ViewBuilder
+    private var videoSurface: some View {
+        if let onAttach {
+            VLCVideoNSView(onReady: onAttach)
+        } else if let snapshot = lastSnapshot, let image = NSImage(data: snapshot) {
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image(systemName: "video")
+                .font(.system(size: isHero ? 44 : 22))
+                .foregroundStyle(.white.opacity(0.15))
+        }
+    }
+
+    private func offlinePlaceholder(message: String) -> some View {
+        ZStack {
+            if let snapshot = lastSnapshot, let image = NSImage(data: snapshot) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .saturation(0)
+                    .opacity(0.35)
+            }
+            VStack(spacing: 8) {
+                Image(systemName: "wifi.slash")
+                    .font(.system(size: isHero ? 28 : 18))
+                    .foregroundStyle(.white.opacity(0.7))
+                Text(message)
+                    .font(.system(size: isHero ? 12 : 10, weight: .medium))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 6)
+                if onlineStatus == .offline, let onReconnect {
+                    Button("Reconnect") { onReconnect() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                }
+            }
+        }
     }
 
     @ViewBuilder
     private var connectionBadge: some View {
-        if let (label, color) = badge(for: state) {
+        if onlineStatus == .online, let (label, color) = badge(for: state) {
             HStack(spacing: 4) {
                 Circle().fill(color).frame(width: 6, height: 6)
                 Text(label)
