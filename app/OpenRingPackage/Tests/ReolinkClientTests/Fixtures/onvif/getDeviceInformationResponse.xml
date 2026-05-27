@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
+            xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
+  <s:Body>
+    <tds:GetDeviceInformationResponse>
+      <tds:Manufacturer>Reolink</tds:Manufacturer>
+      <tds:Model>Duo 3 PoE</tds:Model>
+      <tds:FirmwareVersion>v3.0.0.4518</tds:FirmwareVersion>
+      <tds:SerialNumber>AB12CDEF34567890</tds:SerialNumber>
+      <tds:HardwareId>1</tds:HardwareId>
+    </tds:GetDeviceInformationResponse>
+  </s:Body>
+</s:Envelope>

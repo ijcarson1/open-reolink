@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
+            xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+            xmlns:tt="http://www.onvif.org/ver10/schema"
+            xmlns:tev="http://www.onvif.org/ver10/events/wsdl">
+  <s:Body>
+    <tev:PullMessagesResponse>
+      <tev:CurrentTime>2026-05-27T16:30:05Z</tev:CurrentTime>
+      <tev:TerminationTime>2026-05-27T16:31:00Z</tev:TerminationTime>
+      <wsnt:NotificationMessage>
+        <wsnt:Topic>tns1:RuleEngine/CellMotionDetector/Person</wsnt:Topic>
+        <wsnt:Message>
+          <tt:Message UtcTime="2026-05-27T16:30:04Z" PropertyOperation="Initialized">
+            <tt:Source>
+              <tt:SimpleItem Name="VideoSourceConfigurationToken" Value="VideoSourceToken"/>
+            </tt:Source>
+            <tt:Data>
+              <tt:SimpleItem Name="IsMotion" Value="true"/>
+              <tt:SimpleItem Name="ObjectClass" Value="Person"/>
+            </tt:Data>
+          </tt:Message>
+        </wsnt:Message>
+      </wsnt:NotificationMessage>
+    </tev:PullMessagesResponse>
+  </s:Body>
+</s:Envelope>

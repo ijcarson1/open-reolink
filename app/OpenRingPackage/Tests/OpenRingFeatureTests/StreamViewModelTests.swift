@@ -97,6 +97,7 @@ struct StreamViewModelTests {
 }
 
 @Suite("CameraTileView aspect ratio per kind (ADR-0001 doorbell-portrait)")
+@MainActor
 struct CameraTileAspectTests {
     @Test("Doorbell tiles render 9:16, cameras render 16:9")
     func aspectRatio() {

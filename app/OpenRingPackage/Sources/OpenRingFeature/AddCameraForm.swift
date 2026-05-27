@@ -52,16 +52,28 @@ public final class AddCameraFormModel: ObservableObject {
         )
 
         // Verify admin creds against the camera before persisting (per ADR-0005's
-        // "two passwords, role-keyed" model — events creds verification lands in Slice 5).
-        let client = ReolinkCGIClient(camera: camera, password: adminPassword)
+        // "two passwords, role-keyed" model).
+        let cgi = ReolinkCGIClient(camera: camera, password: adminPassword)
         do {
-            _ = try await client.fetchSnapshot()
+            _ = try await cgi.fetchSnapshot()
         } catch let error as CameraClientError {
             errorMessage = describe(error)
             return false
         } catch {
             errorMessage = error.localizedDescription
             return false
+        }
+
+        // Verify events creds via ONVIF GetDeviceInformation (Slice 5).
+        let onvif = ReolinkONVIFClient(camera: camera, eventsPassword: eventsPassword)
+        do {
+            _ = try await onvif.verifyCredentials()
+        } catch ONVIFError.notAuthorized {
+            errorMessage = "Events credentials rejected — make sure you've created the second (non-admin) User-level account on the camera; see the setup guide."
+            return false
+        } catch {
+            // ONVIF reachability problems shouldn't block save — log and continue;
+            // Slice 5's EventCoordinator will retry once the camera is reachable.
         }
 
         do {
