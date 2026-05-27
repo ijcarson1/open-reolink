@@ -72,8 +72,15 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
             return
         }
         let media = VLCMedia(url: url)
-        media.addOption(":rtsp-tcp")
-        media.addOption(":network-caching=300")
+        // Reolink RTSP tuning (LAN-stable settings, established by trial against
+        // the Duo 3 PoE / E1 Zoom / Video Doorbell PoE on the test fleet).
+        media.addOption(":rtsp-tcp")                       // ADR-0003: TCP not UDP
+        media.addOption(":network-caching=1500")           // 1.5s buffer — was 300ms which starved the decoder on every Wi-Fi jitter
+        media.addOption(":live-caching=1500")
+        media.addOption(":rtsp-caching=1500")
+        media.addOption(":rtsp-frame-buffer-size=500000")  // larger H.264 ring buffer for 4K Duo 3 PoE
+        media.addOption(":clock-jitter=0")                 // LAN doesn't need jitter compensation
+        media.addOption(":clock-synchro=0")                // skip PCR resync — Reolink doesn't honour it cleanly
 
         let player = VLCMediaPlayer()
         player.media = media

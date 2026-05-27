@@ -13,8 +13,12 @@ public final class ReolinkCGIClient: CameraClient, @unchecked Sendable {
         } else {
             let delegate = SelfSignedTrustDelegate(trustedHost: camera.lanIP)
             let config = URLSessionConfiguration.ephemeral
-            config.timeoutIntervalForRequest = 15
-            config.timeoutIntervalForResource = 30
+            // Short LAN-scoped timeouts — a Reolink camera on the same network
+            // answers in well under a second when it's reachable. If it doesn't,
+            // we want the HTTPS→HTTP fallback to kick in fast, not sit on a
+            // 15s URLSession default.
+            config.timeoutIntervalForRequest = 5
+            config.timeoutIntervalForResource = 10
             self.session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
         }
     }
