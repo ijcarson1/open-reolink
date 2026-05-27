@@ -81,6 +81,8 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
         media.addOption(":rtsp-frame-buffer-size=500000")  // larger H.264 ring buffer for 4K Duo 3 PoE
         media.addOption(":clock-jitter=0")                 // LAN doesn't need jitter compensation
         media.addOption(":clock-synchro=0")                // skip PCR resync — Reolink doesn't honour it cleanly
+        media.addOption(":sout-keep")                      // keep stream output alive across reconnects
+        media.addOption(":rtp-timeout=60")                 // 60s RTP inactivity timeout (was libvlc default ~5s); Reolink sends keyframes every ~2s but drops idle conns aggressively
 
         let player = VLCMediaPlayer()
         player.media = media
@@ -94,14 +96,23 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
     @MainActor
     private func scheduleReconnect(reason: String) {
         guard !explicitlyStopped, ownedRenderTarget != nil else { return }
-        reconnectTask?.cancel()
+        // Debounce: VLCKit can emit .stopped twice in rapid succession on a
+        // single drop (once for the underlying access close, once for the
+        // demux close). Without this guard we'd double-schedule.
+        if reconnectTask != nil { return }
         let delay = scheduler.nextDelay()
         NSLog("openReolink: stream dropped for \(camera.displayName) (\(reason)); retrying in \(Int(delay))s")
         subject.send(.reconnecting)
+        // Tear down the stale player explicitly so VLC drops its half-closed
+        // TCP session before we open a new one.
+        player?.stop()
+        player = nil
+        hasReachedPlaying = false
         reconnectTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard let self, !Task.isCancelled else { return }
             await MainActor.run {
+                self.reconnectTask = nil
                 self.startPlayback()
             }
         }
