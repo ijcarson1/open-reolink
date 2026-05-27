@@ -1,9 +1,9 @@
 import SwiftUI
 
-// MARK: - Ring Typography System
+// MARK: - OpenReolink Typography System
 
 public extension Font {
-    enum Ring {
+    enum OpenReolink {
         /// Title - SF Pro 13pt Semibold (popover headers)
         public static let title = Font.system(size: 13, weight: .semibold)
 
@@ -29,7 +29,7 @@ public extension Font {
 
 // MARK: - Text Styles
 
-public struct RingText: View {
+public struct OpenReolinkText: View {
     public enum Style {
         case title
         case headline
@@ -40,12 +40,12 @@ public struct RingText: View {
 
         var font: Font {
             switch self {
-            case .title: return .Ring.title
-            case .headline: return .Ring.headline
-            case .body: return .Ring.body
-            case .caption: return .Ring.caption
-            case .timestamp: return .Ring.timestamp
-            case .mono: return .Ring.mono
+            case .title: return .OpenReolink.title
+            case .headline: return .OpenReolink.headline
+            case .body: return .OpenReolink.body
+            case .caption: return .OpenReolink.caption
+            case .timestamp: return .OpenReolink.timestamp
+            case .mono: return .OpenReolink.mono
             }
         }
 
@@ -88,56 +88,56 @@ struct TypographyPreview: View {
                 HStack {
                     Text("Title (13pt Semi)")
                         .frame(width: 140, alignment: .leading)
-                        .font(.Ring.caption)
+                        .font(.OpenReolink.caption)
                         .foregroundStyle(.secondary)
                     Text("Front Door")
-                        .font(.Ring.title)
+                        .font(.OpenReolink.title)
                 }
 
                 HStack {
                     Text("Headline (12pt Med)")
                         .frame(width: 140, alignment: .leading)
-                        .font(.Ring.caption)
+                        .font(.OpenReolink.caption)
                         .foregroundStyle(.secondary)
                     Text("Recent Events")
-                        .font(.Ring.headline)
+                        .font(.OpenReolink.headline)
                 }
 
                 HStack {
                     Text("Body (12pt Reg)")
                         .frame(width: 140, alignment: .leading)
-                        .font(.Ring.caption)
+                        .font(.OpenReolink.caption)
                         .foregroundStyle(.secondary)
                     Text("Someone is at the door")
-                        .font(.Ring.body)
+                        .font(.OpenReolink.body)
                 }
 
                 HStack {
                     Text("Caption (11pt Reg)")
                         .frame(width: 140, alignment: .leading)
-                        .font(.Ring.caption)
+                        .font(.OpenReolink.caption)
                         .foregroundStyle(.secondary)
                     Text("2 minutes ago")
-                        .font(.Ring.caption)
+                        .font(.OpenReolink.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 HStack {
                     Text("Timestamp (Mono)")
                         .frame(width: 140, alignment: .leading)
-                        .font(.Ring.caption)
+                        .font(.OpenReolink.caption)
                         .foregroundStyle(.secondary)
                     Text("14:36")
-                        .font(.Ring.timestamp)
+                        .font(.OpenReolink.timestamp)
                 }
 
                 HStack {
                     Text("Mono (11pt Med)")
                         .frame(width: 140, alignment: .leading)
-                        .font(.Ring.caption)
+                        .font(.OpenReolink.caption)
                         .foregroundStyle(.secondary)
                     Text("RING")
-                        .font(.Ring.mono)
+                        .font(.OpenReolink.mono)
                 }
             }
         }

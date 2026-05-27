@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Ring Spacing System (4pt grid)
+// MARK: - OpenReolink Spacing System (4pt grid)
 
 public enum Spacing {
     /// 4pt - tight padding
@@ -77,7 +77,7 @@ public enum Layout {
 
 // MARK: - Animation Constants
 
-public enum RingAnimation {
+public enum OpenReolinkAnimation {
     /// Default ease timing
     public static let defaultDuration: Double = 0.2
 

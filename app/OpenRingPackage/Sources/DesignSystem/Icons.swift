@@ -1,8 +1,8 @@
 import SwiftUI
 
-// MARK: - Ring Icon System (SF Symbols)
+// MARK: - OpenReolink Icon System (SF Symbols)
 
-public enum RingIcon: String {
+public enum OpenReolinkIcon: String {
     // Event types
     case ring = "bell.fill"
     case motion = "figure.walk"
@@ -45,7 +45,7 @@ public struct EventIcon: View {
         case motion
         case package
 
-        var icon: RingIcon {
+        var icon: OpenReolinkIcon {
             switch self {
             case .ring: return .ring
             case .motion: return .motion
@@ -55,9 +55,9 @@ public struct EventIcon: View {
 
         var color: Color {
             switch self {
-            case .ring: return .Ring.ring
-            case .motion: return .Ring.motion
-            case .package: return .Ring.package
+            case .ring: return .OpenReolink.ring
+            case .motion: return .OpenReolink.motion
+            case .package: return .OpenReolink.package
             }
         }
     }
@@ -88,10 +88,10 @@ public struct StatusIndicator: View {
 
         var color: Color {
             switch self {
-            case .live: return .Ring.live
-            case .online: return .Ring.success
-            case .offline: return .Ring.motion
-            case .warning: return .Ring.error
+            case .live: return .OpenReolink.live
+            case .online: return .OpenReolink.success
+            case .offline: return .OpenReolink.motion
+            case .warning: return .OpenReolink.error
             }
         }
     }
@@ -114,7 +114,7 @@ public struct StatusIndicator: View {
             .onAppear {
                 if status == .live {
                     withAnimation(
-                        .easeInOut(duration: RingAnimation.pulseDuration)
+                        .easeInOut(duration: OpenReolinkAnimation.pulseDuration)
                         .repeatForever(autoreverses: true)
                     ) {
                         isPulsing = true
@@ -133,12 +133,12 @@ public struct LiveBadge: View {
         HStack(spacing: Spacing.xs) {
             StatusIndicator(.live)
             Text("LIVE")
-                .font(.Ring.mono)
-                .foregroundStyle(Color.Ring.live)
+                .font(.OpenReolink.mono)
+                .foregroundStyle(Color.OpenReolink.live)
         }
         .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.xs)
-        .background(Color.Ring.live.opacity(0.15))
+        .background(Color.OpenReolink.live.opacity(0.15))
         .clipShape(Capsule())
     }
 }
@@ -155,7 +155,7 @@ struct IconsPreview: View {
             HStack(spacing: Spacing.lg) {
                 VStack {
                     EventIcon(.ring)
-                    Text("Ring").font(.caption)
+                    Text("Doorbell").font(.caption)
                 }
                 VStack {
                     EventIcon(.motion)

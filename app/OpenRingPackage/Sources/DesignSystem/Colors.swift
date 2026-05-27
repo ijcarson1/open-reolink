@@ -1,10 +1,10 @@
 import SwiftUI
 
-// MARK: - Ring Design System Colors (Dark Minimal)
+// MARK: - OpenReolink Design System Colors (Dark Minimal)
 
 public extension Color {
-    /// Ring brand colors - Dark minimal palette
-    enum Ring {
+    /// OpenReolink brand colors - Dark minimal palette
+    enum OpenReolink {
         // MARK: - Backgrounds (Pure black based)
 
         /// Primary background - pure black
@@ -27,9 +27,9 @@ public extension Color {
         /// Surface pressed state
         public static let surfacePressed = Color(hex: "2F2F2F")
 
-        // MARK: - Accent (Ring Blue - use sparingly)
+        // MARK: - Accent (Accent — use sparingly)
 
-        /// Primary accent - Ring Blue #1C96E8
+        /// Primary accent - Accent #1C96E8
         public static let accent = Color(hex: "1C96E8")
 
         /// Accent dimmed (for backgrounds)
@@ -56,7 +56,7 @@ public extension Color {
 
         // MARK: - Event Colors (Muted)
 
-        /// Ring press event - uses accent
+        /// Doorbell ring event - uses accent
         public static let ring = accent
 
         /// Motion event - subtle gray
@@ -109,7 +109,7 @@ public extension Color {
         public static let hoverBackground = Color(light: Color.black.opacity(0.05), dark: Color.white.opacity(0.08))
 
         /// Selected background
-        public static let selectedBackground = Color.Ring.accent.opacity(0.15)
+        public static let selectedBackground = Color.OpenReolink.accent.opacity(0.15)
     }
 }
 
@@ -159,40 +159,40 @@ struct ColorsPreview: View {
                 .foregroundStyle(.white)
 
             HStack(spacing: 12) {
-                colorSwatch("Background", Color.Ring.background)
-                colorSwatch("Secondary", Color.Ring.backgroundSecondary)
-                colorSwatch("Surface", Color.Ring.surface)
-                colorSwatch("Hover", Color.Ring.surfaceHover)
+                colorSwatch("Background", Color.OpenReolink.background)
+                colorSwatch("Secondary", Color.OpenReolink.backgroundSecondary)
+                colorSwatch("Surface", Color.OpenReolink.surface)
+                colorSwatch("Hover", Color.OpenReolink.surfaceHover)
             }
 
-            Divider().background(Color.Ring.border)
+            Divider().background(Color.OpenReolink.border)
 
             Text("Accent & Status")
                 .font(.headline)
                 .foregroundStyle(.white)
 
             HStack(spacing: 12) {
-                colorSwatch("Accent", Color.Ring.accent)
-                colorSwatch("Error", Color.Ring.error)
-                colorSwatch("Success", Color.Ring.success)
-                colorSwatch("Warning", Color.Ring.warning)
+                colorSwatch("Accent", Color.OpenReolink.accent)
+                colorSwatch("Error", Color.OpenReolink.error)
+                colorSwatch("Success", Color.OpenReolink.success)
+                colorSwatch("Warning", Color.OpenReolink.warning)
             }
 
-            Divider().background(Color.Ring.border)
+            Divider().background(Color.OpenReolink.border)
 
             Text("Text Colors")
                 .font(.headline)
                 .foregroundStyle(.white)
 
             HStack(spacing: 12) {
-                colorSwatch("Primary", Color.Ring.textPrimary)
-                colorSwatch("Secondary", Color.Ring.textSecondary)
-                colorSwatch("Tertiary", Color.Ring.textTertiary)
+                colorSwatch("Primary", Color.OpenReolink.textPrimary)
+                colorSwatch("Secondary", Color.OpenReolink.textSecondary)
+                colorSwatch("Tertiary", Color.OpenReolink.textTertiary)
             }
         }
         .padding()
         .frame(width: 500)
-        .background(Color.Ring.background)
+        .background(Color.OpenReolink.background)
     }
 
     func colorSwatch(_ name: String, _ color: Color) -> some View {
@@ -201,12 +201,12 @@ struct ColorsPreview: View {
                 .fill(color)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.Ring.border, lineWidth: 1)
+                        .stroke(Color.OpenReolink.border, lineWidth: 1)
                 )
                 .frame(width: 60, height: 40)
             Text(name)
                 .font(.caption)
-                .foregroundStyle(Color.Ring.textSecondary)
+                .foregroundStyle(Color.OpenReolink.textSecondary)
         }
     }
 }

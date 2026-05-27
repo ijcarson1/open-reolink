@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Primary Button
 
-public struct RingPrimaryButton: View {
+public struct OpenReolinkPrimaryButton: View {
     private let title: String
     private let icon: String?
     private let action: () -> Void
@@ -23,17 +23,17 @@ public struct RingPrimaryButton: View {
                         .font(.system(size: Layout.Button.iconSize))
                 }
                 Text(title)
-                    .font(.Ring.headline)
+                    .font(.OpenReolink.headline)
             }
             .foregroundStyle(.white)
             .padding(.horizontal, Layout.Button.horizontalPadding)
             .padding(.vertical, Layout.Button.verticalPadding)
-            .background(Color.Ring.accent.brightness(isHovering ? 0.1 : 0))
+            .background(Color.OpenReolink.accent.brightness(isHovering ? 0.1 : 0))
             .clipShape(RoundedRectangle(cornerRadius: Layout.Button.cornerRadius))
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: RingAnimation.hoverDuration)) {
+            withAnimation(.easeInOut(duration: OpenReolinkAnimation.hoverDuration)) {
                 isHovering = hovering
             }
         }
@@ -42,7 +42,7 @@ public struct RingPrimaryButton: View {
 
 // MARK: - Secondary Button
 
-public struct RingSecondaryButton: View {
+public struct OpenReolinkSecondaryButton: View {
     private let title: String
     private let icon: String?
     private let action: () -> Void
@@ -63,7 +63,7 @@ public struct RingSecondaryButton: View {
                         .font(.system(size: Layout.Button.iconSize))
                 }
                 Text(title)
-                    .font(.Ring.headline)
+                    .font(.OpenReolink.headline)
             }
             .foregroundStyle(.primary)
             .padding(.horizontal, Layout.Button.horizontalPadding)
@@ -77,7 +77,7 @@ public struct RingSecondaryButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: RingAnimation.hoverDuration)) {
+            withAnimation(.easeInOut(duration: OpenReolinkAnimation.hoverDuration)) {
                 isHovering = hovering
             }
         }
@@ -86,7 +86,7 @@ public struct RingSecondaryButton: View {
 
 // MARK: - Icon Button
 
-public struct RingIconButton: View {
+public struct OpenReolinkIconButton: View {
     private let icon: String
     private let action: () -> Void
 
@@ -108,7 +108,7 @@ public struct RingIconButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: RingAnimation.hoverDuration)) {
+            withAnimation(.easeInOut(duration: OpenReolinkAnimation.hoverDuration)) {
                 isHovering = hovering
             }
         }
@@ -117,7 +117,7 @@ public struct RingIconButton: View {
 
 // MARK: - Toolbar Icon Button (smaller, for video overlays)
 
-public struct RingToolbarButton: View {
+public struct OpenReolinkToolbarButton: View {
     private let icon: String
     private let isActive: Bool
     private let action: () -> Void
@@ -134,14 +134,14 @@ public struct RingToolbarButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(isActive ? Color.Ring.accent : .white)
+                .foregroundStyle(isActive ? Color.OpenReolink.accent : .white)
                 .frame(width: 24, height: 24)
                 .background(isHovering ? Color.white.opacity(0.2) : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: RingAnimation.hoverDuration)) {
+            withAnimation(.easeInOut(duration: OpenReolinkAnimation.hoverDuration)) {
                 isHovering = hovering
             }
         }
@@ -158,25 +158,25 @@ struct ButtonsPreview: View {
                 .font(.title2)
 
             HStack(spacing: Spacing.md) {
-                RingPrimaryButton("Live", icon: "video.fill") {}
-                RingPrimaryButton("Snooze") {}
+                OpenReolinkPrimaryButton("Live", icon: "video.fill") {}
+                OpenReolinkPrimaryButton("Snooze") {}
             }
 
             HStack(spacing: Spacing.md) {
-                RingSecondaryButton("Motion: ON", icon: "bell.fill") {}
-                RingSecondaryButton("Settings", icon: "gearshape") {}
+                OpenReolinkSecondaryButton("Motion: ON", icon: "bell.fill") {}
+                OpenReolinkSecondaryButton("Settings", icon: "gearshape") {}
             }
 
             HStack(spacing: Spacing.sm) {
-                RingIconButton("xmark") {}
-                RingIconButton("pip.enter") {}
-                RingIconButton("speaker.slash.fill") {}
+                OpenReolinkIconButton("xmark") {}
+                OpenReolinkIconButton("pip.enter") {}
+                OpenReolinkIconButton("speaker.slash.fill") {}
             }
 
             HStack(spacing: Spacing.xs) {
-                RingToolbarButton("speaker.slash.fill") {}
-                RingToolbarButton("pip.enter", isActive: true) {}
-                RingToolbarButton("xmark") {}
+                OpenReolinkToolbarButton("speaker.slash.fill") {}
+                OpenReolinkToolbarButton("pip.enter", isActive: true) {}
+                OpenReolinkToolbarButton("xmark") {}
             }
             .padding(Spacing.sm)
             .background(Color.black.opacity(0.6))
