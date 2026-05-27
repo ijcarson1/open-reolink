@@ -45,7 +45,8 @@ let package = Package(
 
         .testTarget(
             name: "ReolinkClientTests",
-            dependencies: ["ReolinkClient"]
+            dependencies: ["ReolinkClient"],
+            resources: [.copy("Fixtures")]
         ),
 
         .testTarget(

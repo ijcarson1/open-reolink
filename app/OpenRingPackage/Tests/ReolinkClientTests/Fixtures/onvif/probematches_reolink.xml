@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+                   xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+                   xmlns:wsdd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+                   xmlns:tds="http://www.onvif.org/ver10/network/wsdl">
+  <SOAP-ENV:Header>
+    <wsa:MessageID>urn:uuid:00000000-0000-0000-0000-000000000001</wsa:MessageID>
+    <wsa:RelatesTo>urn:uuid:11111111-2222-3333-4444-555555555555</wsa:RelatesTo>
+    <wsa:To>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</wsa:To>
+    <wsa:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/ProbeMatches</wsa:Action>
+  </SOAP-ENV:Header>
+  <SOAP-ENV:Body>
+    <wsdd:ProbeMatches>
+      <wsdd:ProbeMatch>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:uuid:f6e2a3b0-9f51-11e7-9a3a-ec71db49aabbcc</wsa:Address>
+        </wsa:EndpointReference>
+        <wsdd:Types>tds:NetworkVideoTransmitter</wsdd:Types>
+        <wsdd:Scopes>onvif://www.onvif.org/type/video_encoder onvif://www.onvif.org/name/Reolink onvif://www.onvif.org/hardware/Duo%203%20PoE onvif://www.onvif.org/location/garden</wsdd:Scopes>
+        <wsdd:XAddrs>http://192.0.2.10:8000/onvif/device_service</wsdd:XAddrs>
+        <wsdd:MetadataVersion>1</wsdd:MetadataVersion>
+      </wsdd:ProbeMatch>
+      <wsdd:ProbeMatch>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:uuid:a1b2c3d4-1111-2222-3333-aabbccddeeff</wsa:Address>
+        </wsa:EndpointReference>
+        <wsdd:Types>tds:NetworkVideoTransmitter</wsdd:Types>
+        <wsdd:Scopes>onvif://www.onvif.org/type/video_encoder onvif://www.onvif.org/name/Reolink onvif://www.onvif.org/hardware/Video%20Doorbell%20PoE</wsdd:Scopes>
+        <wsdd:XAddrs>http://192.0.2.11:8000/onvif/device_service</wsdd:XAddrs>
+        <wsdd:MetadataVersion>1</wsdd:MetadataVersion>
+      </wsdd:ProbeMatch>
+    </wsdd:ProbeMatches>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

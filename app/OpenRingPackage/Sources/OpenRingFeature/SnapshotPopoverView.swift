@@ -17,7 +17,7 @@ public struct SnapshotPopoverView: View {
         .onAppear { appState.startRefreshing() }
         .onDisappear { appState.stopRefreshing() }
         .sheet(isPresented: $appState.presentingAddCameraForm) {
-            AddCameraForm()
+            OnboardingWizardView()
                 .environmentObject(appState)
         }
     }

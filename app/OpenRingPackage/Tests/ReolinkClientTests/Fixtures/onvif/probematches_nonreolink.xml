@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+                   xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+                   xmlns:wsdd="http://schemas.xmlsoap.org/ws/2005/04/discovery"
+                   xmlns:tds="http://www.onvif.org/ver10/network/wsdl">
+  <SOAP-ENV:Body>
+    <wsdd:ProbeMatches>
+      <wsdd:ProbeMatch>
+        <wsa:EndpointReference>
+          <wsa:Address>urn:uuid:00112233-4455-6677-8899-aabbccddeeff</wsa:Address>
+        </wsa:EndpointReference>
+        <wsdd:Scopes>onvif://www.onvif.org/type/video_encoder onvif://www.onvif.org/name/Axis%20Communications onvif://www.onvif.org/hardware/M3045-V</wsdd:Scopes>
+        <wsdd:XAddrs>http://192.0.2.50:8000/onvif/device_service</wsdd:XAddrs>
+      </wsdd:ProbeMatch>
+    </wsdd:ProbeMatches>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

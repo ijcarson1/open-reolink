@@ -11,11 +11,20 @@ public final class AddCameraFormModel: ObservableObject {
     @Published public var adminPassword: String = ""
     @Published public var eventsUsername: String = "onvif"
     @Published public var eventsPassword: String = ""
+    public var discoveredVia: CameraDiscoverySource = .manual
+    public var discoveredModel: String? = nil
 
     @Published public private(set) var isVerifying: Bool = false
     @Published public private(set) var errorMessage: String?
 
     public init() {}
+
+    public func prefill(from discovered: DiscoveredCamera) {
+        lanIP = discovered.ip
+        if displayName.isEmpty { displayName = discovered.model ?? discovered.ip }
+        discoveredModel = discovered.model
+        discoveredVia = .onvifDiscovery
+    }
 
     public var canSubmit: Bool {
         !displayName.isEmpty
@@ -36,9 +45,10 @@ public final class AddCameraFormModel: ObservableObject {
             displayName: displayName.trimmingCharacters(in: .whitespaces),
             lanIP: lanIP,
             kind: kind,
+            model: discoveredModel,
             adminUsername: adminUsername,
             eventsUsername: eventsUsername,
-            discoveredVia: .manual
+            discoveredVia: discoveredVia
         )
 
         // Verify admin creds against the camera before persisting (per ADR-0005's
