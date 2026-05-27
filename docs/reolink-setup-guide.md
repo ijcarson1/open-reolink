@@ -15,7 +15,7 @@ In your router's DHCP settings, reserve the camera's current IP so it doesn't ch
 
 ### 2. Open the camera's web dashboard
 
-In a browser: `https://<camera-ip>/` — for example, `https://192.168.5.187/`. Reolink uses a self-signed certificate by default, so your browser will warn you. Accept the warning (you're connecting to a device on your own LAN). Log in as `admin` with the camera's admin password.
+In a browser: `https://<camera-ip>/` — for example, `https://192.168.1.10/`. Reolink uses a self-signed certificate by default, so your browser will warn you. Accept the warning (you're connecting to a device on your own LAN). Log in as `admin` with the camera's admin password.
 
 ### 3. Enable ONVIF and RTSP
 

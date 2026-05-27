@@ -9,7 +9,7 @@ A single Reolink device on the LAN, identified by IP/host and per-device credent
 _Avoid_: Device, hub, entity.
 
 **Doorbell**:
-A subtype of **Camera** that additionally supports a press event ("ring") and two-way audio. Currently the Reolink Video Doorbell PoE.
+A subtype of **Camera** that additionally supports a press event ("ring") and two-way audio (e.g. the Reolink Video Doorbell PoE).
 _Avoid_: Front-door camera.
 
 **Stream**:
@@ -41,7 +41,8 @@ _Avoid_: Description, caption.
 
 ## Relationships
 
-- The user has many **Camera**s. Currently three: one **Doorbell** and two non-doorbell **Camera**s.
+- A user configures zero or more **Camera**s. At most a small handful in typical home use.
+- Zero or more of those **Camera**s may be **Doorbell**s.
 - A **Camera** produces zero or more **Motion event**s over time.
 - A **Doorbell** produces zero or more **Motion event**s AND zero or more **Ring event**s.
 - A **Stream** belongs to exactly one **Camera** and is live (not historical).
