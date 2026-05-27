@@ -8,30 +8,24 @@ let package = Package(
     products: [
         .library(name: "OpenRingFeature", targets: ["OpenRingFeature"]),
         .library(name: "DesignSystem", targets: ["DesignSystem"]),
-        .library(name: "RingClient", targets: ["RingClient"]),
+        .library(name: "ReolinkClient", targets: ["ReolinkClient"]),
         .library(name: "Storage", targets: ["Storage"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
         .package(url: "https://github.com/nicklockwood/SwiftFormat.git", from: "0.49.0"),
-        .package(url: "https://github.com/stasel/WebRTC.git", from: "125.0.0"),
     ],
     targets: [
-        // Design System - colors, typography, components
         .target(
             name: "DesignSystem",
             dependencies: []
         ),
 
-        // Ring API Client
         .target(
-            name: "RingClient",
-            dependencies: [
-                .product(name: "WebRTC", package: "WebRTC")
-            ]
+            name: "ReolinkClient",
+            dependencies: []
         ),
 
-        // Local Storage (SQLite via GRDB)
         .target(
             name: "Storage",
             dependencies: [
@@ -39,14 +33,18 @@ let package = Package(
             ]
         ),
 
-        // Main Feature module
         .target(
             name: "OpenRingFeature",
             dependencies: [
                 "DesignSystem",
-                "RingClient",
-                "Storage"
+                "ReolinkClient",
+                "Storage",
             ]
+        ),
+
+        .testTarget(
+            name: "ReolinkClientTests",
+            dependencies: ["ReolinkClient"]
         ),
 
         .testTarget(

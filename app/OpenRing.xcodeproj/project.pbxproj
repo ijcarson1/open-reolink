@@ -117,7 +117,6 @@
 				8BC265582DEDD3F400F279A4 /* Sources */,
 				8BC265592DEDD3F400F279A4 /* Frameworks */,
 				8BC2655A2DEDD3F400F279A4 /* Resources */,
-				8BC265902DEFF00000000001 /* Embed WebRTC Framework */,
 			);
 			buildRules = (
 			);
@@ -242,27 +241,6 @@
 			targetProxy = 8BC265752DEDD3F500F279A4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		8BC265902DEFF00000000001 /* Embed WebRTC Framework */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Embed WebRTC Framework";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Find and embed the WebRTC framework\nFRAMEWORK_PATH=\"${BUILD_DIR}/../../SourcePackages/artifacts/webrtc/WebRTC/WebRTC.xcframework\"\nDEST_DIR=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\n\nif [ -d \"$FRAMEWORK_PATH\" ]; then\n    mkdir -p \"$DEST_DIR\"\n    \n    # Select the right architecture\n    if [ \"$PLATFORM_NAME\" = \"macosx\" ]; then\n        ARCH_PATH=\"$FRAMEWORK_PATH/macos-x86_64_arm64/WebRTC.framework\"\n    fi\n    \n    if [ -d \"$ARCH_PATH\" ]; then\n        cp -R \"$ARCH_PATH\" \"$DEST_DIR/\"\n        echo \"Embedded WebRTC.framework from $ARCH_PATH\"\n        \n        # Codesign the embedded framework\n        if [ -n \"$EXPANDED_CODE_SIGN_IDENTITY\" ]; then\n            codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" \"$DEST_DIR/WebRTC.framework\"\n        fi\n    else\n        echo \"warning: Could not find WebRTC.framework for architecture\"\n    fi\nelse\n    echo \"warning: WebRTC.xcframework not found at $FRAMEWORK_PATH\"\nfi\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		8BC2657C2DEDD3F500F279A4 /* Debug */ = {
