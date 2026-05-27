@@ -27,6 +27,7 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
     private var reconnectTask: Task<Void, Never>?
     private var hasReachedPlaying = false
     private var explicitlyStopped = false
+    private var audioEnabled: Bool = false
 
     public var state: AnyPublisher<StreamState, Never> {
         subject.eraseToAnyPublisher()
@@ -48,6 +49,16 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
             self.explicitlyStopped = false
             self.ownedRenderTarget = target
             self.startPlayback()
+        }
+    }
+
+    /// Enables or disables the player's audio output. Persists across
+    /// reconnects — startPlayback re-applies the current setting after
+    /// the player is rebuilt.
+    public func setAudioEnabled(_ enabled: Bool) {
+        Task { @MainActor in
+            self.audioEnabled = enabled
+            self.player?.audio?.volume = enabled ? 100 : 0
         }
     }
 
@@ -92,6 +103,12 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
         self.player = player
         self.subject.send(.connecting)
         player.play()
+        // VLCMediaPlayer.audio is set up after play() — apply the saved
+        // audio-enabled state once it's available.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            self?.player?.audio?.volume = (self?.audioEnabled ?? false) ? 100 : 0
+        }
     }
 
     @MainActor

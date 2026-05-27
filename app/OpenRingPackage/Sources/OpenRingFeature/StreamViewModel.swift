@@ -113,6 +113,11 @@ public final class StreamViewModel: ObservableObject {
         }
     }
 
+    /// Mute / unmute the popover tile's session for a given camera.
+    public func setAudio(enabled: Bool, for cameraId: UUID) {
+        (sessions[cameraId] as? ReolinkRTSPSession)?.setAudioEnabled(enabled)
+    }
+
     // Test-only accessors — needed by integration tests to inspect lifecycle.
     public func activeSessionCount() -> Int { sessions.count }
     public func quality(for cameraId: UUID) -> StreamQuality? {

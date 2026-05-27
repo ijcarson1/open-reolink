@@ -82,6 +82,7 @@ public struct SnapshotPopoverView: View {
                 onlineStatus: appState.onlineStatuses[camera.id] ?? .online,
                 lastSnapshot: appState.lastSnapshots[camera.id],
                 isHero: false,
+                audioEnabled: appState.tileAudioEnabled[camera.id] ?? false,
                 onTap: {
                     NSApp.activate(ignoringOtherApps: true)
                     openWindow(value: camera.id)
@@ -92,7 +93,8 @@ public struct SnapshotPopoverView: View {
                         guard let appState else { return }
                         await appState.streamViewModel.attachRenderTarget(target, to: camera)
                     }
-                }
+                },
+                onToggleAudio: { appState.toggleTileAudio(cameraId: camera.id) }
             )
 
             if camera.kind == .doorbell, let summary = appState.aiSummaries[camera.id] {

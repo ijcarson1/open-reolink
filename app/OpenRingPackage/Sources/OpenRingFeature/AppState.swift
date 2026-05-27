@@ -25,6 +25,7 @@ public final class AppState: ObservableObject {
     @Published public private(set) var onlineStatuses: [UUID: OnlineStateTracker.Status] = [:]
     @Published public private(set) var lastSnapshots: [UUID: Data] = [:]
     @Published public private(set) var aiSummaries: [UUID: AISummary] = [:]
+    @Published public private(set) var tileAudioEnabled: [UUID: Bool] = [:]
     @Published public var presentingAddCameraForm: Bool = false
     @Published public var presentingSettings: Bool = false
     @Published public var ringFocusedCameraId: UUID?
@@ -194,6 +195,15 @@ public final class AppState: ObservableObject {
     public func reconnect(cameraId: UUID) {
         onlineTracker.clearLockout(for: cameraId)
         onlineStatuses[cameraId] = .online
+    }
+
+    /// Toggles audio on the popover tile's sub-stream session. Defaults to
+    /// muted — multiple tiles all unmuted at once would be chaos. The user
+    /// opts each tile in by tapping the speaker icon.
+    public func toggleTileAudio(cameraId: UUID) {
+        let enabled = !(tileAudioEnabled[cameraId] ?? false)
+        tileAudioEnabled[cameraId] = enabled
+        streamViewModel.setAudio(enabled: enabled, for: cameraId)
     }
 
     // MARK: Popover lifecycle

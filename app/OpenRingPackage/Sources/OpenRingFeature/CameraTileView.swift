@@ -13,9 +13,11 @@ public struct CameraTileView: View {
     public let onlineStatus: OnlineStateTracker.Status
     public let lastSnapshot: Data?
     public let isHero: Bool
+    public let audioEnabled: Bool
     public var onTap: (() -> Void)?
     public var onReconnect: (() -> Void)?
     public var onAttach: ((VLCRenderTarget) -> Void)?
+    public var onToggleAudio: (() -> Void)?
 
     public init(
         camera: Camera,
@@ -23,18 +25,22 @@ public struct CameraTileView: View {
         onlineStatus: OnlineStateTracker.Status = .online,
         lastSnapshot: Data? = nil,
         isHero: Bool = false,
+        audioEnabled: Bool = false,
         onTap: (() -> Void)? = nil,
         onReconnect: (() -> Void)? = nil,
-        onAttach: ((VLCRenderTarget) -> Void)? = nil
+        onAttach: ((VLCRenderTarget) -> Void)? = nil,
+        onToggleAudio: (() -> Void)? = nil
     ) {
         self.camera = camera
         self.state = state
         self.onlineStatus = onlineStatus
         self.lastSnapshot = lastSnapshot
         self.isHero = isHero
+        self.audioEnabled = audioEnabled
         self.onTap = onTap
         self.onReconnect = onReconnect
         self.onAttach = onAttach
+        self.onToggleAudio = onToggleAudio
     }
 
     public var body: some View {
@@ -53,6 +59,20 @@ public struct CameraTileView: View {
                 .padding(.vertical, 3)
                 .background(Color.black.opacity(0.55), in: Capsule())
                 .padding(6)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if let onToggleAudio, onlineStatus == .online {
+                Button(action: onToggleAudio) {
+                    Image(systemName: audioEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white)
+                        .padding(6)
+                        .background(Color.black.opacity(0.55), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .help(audioEnabled ? "Mute" : "Unmute")
+                .padding(6)
+            }
         }
         .contentShape(Rectangle())
         .onTapGesture { onTap?() }

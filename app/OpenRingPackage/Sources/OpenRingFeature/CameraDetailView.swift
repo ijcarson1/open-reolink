@@ -121,33 +121,62 @@ public struct CameraDetailView: View {
                 systemImage: "arrow.clockwise",
                 action: { model.reconnect() }
             )
+            controlButton(
+                title: model.audioEnabled ? "Mute" : "Unmute",
+                systemImage: model.audioEnabled ? "speaker.wave.2" : "speaker.slash",
+                action: { model.toggleAudio() }
+            )
             Divider().frame(height: 18)
 
-            // Per ADR-0002 the following are deferred to v1.1. Buttons render
-            // disabled so the affordance is visible — the v1.1 work just flips
-            // them live.
             controlButton(
                 title: "Spotlight",
-                systemImage: "lightbulb",
-                disabled: camera.capabilities?.hasSpotlight != true,
-                action: {}
+                systemImage: model.spotlightOn ? "lightbulb.fill" : "lightbulb",
+                tint: model.spotlightOn ? .yellow : nil,
+                action: { model.toggleSpotlight() }
             )
             controlButton(
                 title: "Siren",
-                systemImage: "speaker.wave.3",
-                disabled: camera.capabilities?.hasSiren != true,
-                action: {}
+                systemImage: model.sirenOn ? "speaker.wave.3.fill" : "speaker.wave.3",
+                tint: model.sirenOn ? .red : nil,
+                action: { model.toggleSiren() }
             )
-            controlButton(
-                title: "Quick reply",
-                systemImage: "text.bubble",
-                disabled: camera.kind != .doorbell,
-                action: {}
-            )
+            if camera.kind == .doorbell {
+                Menu {
+                    if model.quickReplies.isEmpty {
+                        Button("Load replies…") {
+                            Task { await model.loadQuickReplies() }
+                        }
+                    } else {
+                        ForEach(model.quickReplies) { reply in
+                            Button(reply.name) { model.playQuickReply(reply) }
+                        }
+                        Divider()
+                        Button("Refresh") { Task { await model.loadQuickReplies() } }
+                    }
+                } label: {
+                    VStack(spacing: 2) {
+                        Image(systemName: "text.bubble")
+                            .font(.system(size: 14))
+                        Text("Quick reply")
+                            .font(.system(size: 9))
+                    }
+                    .frame(minWidth: 56)
+                    .padding(.vertical, 4)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+            }
 
             Spacer()
 
-            if let saved = model.savedSnapshotPath {
+            if let status = model.controlStatus {
+                Text(status)
+                    .font(.system(size: 10))
+                    .foregroundStyle(status.hasPrefix("Failed") ? .red : .secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            } else if let saved = model.savedSnapshotPath {
                 Text("Saved → \(saved)")
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(.secondary)
@@ -164,12 +193,14 @@ public struct CameraDetailView: View {
         title: String,
         systemImage: String,
         disabled: Bool = false,
+        tint: Color? = nil,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             VStack(spacing: 2) {
                 Image(systemName: systemImage)
                     .font(.system(size: 14))
+                    .foregroundStyle(tint ?? .primary)
                 Text(title)
                     .font(.system(size: 9))
             }
@@ -199,11 +230,17 @@ public struct CameraDetailView: View {
 final class CameraDetailModel: ObservableObject {
     @Published private(set) var state: StreamState = .idle
     @Published private(set) var savedSnapshotPath: String?
+    @Published private(set) var audioEnabled: Bool = true
+    @Published private(set) var spotlightOn: Bool = false
+    @Published private(set) var sirenOn: Bool = false
+    @Published private(set) var quickReplies: [QuickReplyFile] = []
+    @Published private(set) var controlStatus: String?
 
     private var session: ReolinkRTSPSession?
     private var cancellable: AnyCancellable?
     private var camera: Camera?
     private var appState: AppState?
+    private var statusClearTask: Task<Void, Never>?
 
     func start(camera: Camera, appState: AppState) {
         self.camera = camera
@@ -214,12 +251,84 @@ final class CameraDetailModel: ObservableObject {
             return
         }
         let session = ReolinkRTSPSession(camera: camera, password: password, quality: .main)
+        session.setAudioEnabled(audioEnabled)
         self.session = session
         cancellable = session.state
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newState in
                 self?.state = newState
             }
+    }
+
+    // MARK: - Controls
+
+    func toggleAudio() {
+        audioEnabled.toggle()
+        session?.setAudioEnabled(audioEnabled)
+    }
+
+    func toggleSpotlight() {
+        runCGI(label: "Spotlight") { client in
+            let next = !self.spotlightOn
+            try await client.setSpotlight(on: next)
+            await MainActor.run { self.spotlightOn = next }
+        }
+    }
+
+    func toggleSiren() {
+        runCGI(label: "Siren") { client in
+            let next = !self.sirenOn
+            try await client.setSiren(on: next)
+            await MainActor.run { self.sirenOn = next }
+        }
+    }
+
+    func loadQuickReplies() async {
+        await runCGIAsync(label: "Quick replies") { client in
+            let list = try await client.quickReplyList()
+            await MainActor.run { self.quickReplies = list }
+        }
+    }
+
+    func playQuickReply(_ reply: QuickReplyFile) {
+        runCGI(label: "Quick reply") { client in
+            try await client.playQuickReply(fileId: reply.id)
+        }
+    }
+
+    private func runCGI(
+        label: String,
+        _ work: @escaping (ReolinkCGIClient) async throws -> Void
+    ) {
+        Task { await runCGIAsync(label: label, work) }
+    }
+
+    private func runCGIAsync(
+        label: String,
+        _ work: @escaping (ReolinkCGIClient) async throws -> Void
+    ) async {
+        guard let camera, let appState else { return }
+        do {
+            guard let password = try appState.cameraService.adminPassword(for: camera.id) else {
+                surface("\(label): no admin password")
+                return
+            }
+            let client = ReolinkCGIClient(camera: camera, password: password)
+            try await work(client)
+            surface("\(label): ✓", clearAfter: 2)
+        } catch {
+            surface("Failed (\(label)): \(error.localizedDescription)", clearAfter: 5)
+        }
+    }
+
+    private func surface(_ message: String, clearAfter seconds: TimeInterval = 3) {
+        controlStatus = message
+        statusClearTask?.cancel()
+        statusClearTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { self?.controlStatus = nil }
+        }
     }
 
     func attach(target: VLCRenderTarget) async {
