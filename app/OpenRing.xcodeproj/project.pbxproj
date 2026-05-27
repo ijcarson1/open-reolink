@@ -263,6 +263,7 @@
 			baseConfigurationReferenceRelativePath = Debug.xcconfig;
 			buildSettings = {
 				INFOPLIST_KEY_CFBundleDisplayName = "$(PRODUCT_DISPLAY_NAME)";
+				INFOPLIST_KEY_LSUIElement = YES;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -273,6 +274,7 @@
 			baseConfigurationReferenceRelativePath = Release.xcconfig;
 			buildSettings = {
 				INFOPLIST_KEY_CFBundleDisplayName = "$(PRODUCT_DISPLAY_NAME)";
+				INFOPLIST_KEY_LSUIElement = YES;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

@@ -4,6 +4,7 @@ import ReolinkClient
 
 public struct SnapshotPopoverView: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.openWindow) private var openWindow
 
     public init() {}
 
@@ -16,13 +17,17 @@ public struct SnapshotPopoverView: View {
         .frame(width: 520, height: 560)
         .onAppear { appState.popoverDidAppear() }
         .onDisappear { appState.popoverDidDisappear() }
-        .sheet(isPresented: $appState.presentingAddCameraForm) {
-            OnboardingWizardView()
-                .environmentObject(appState)
+        .onChange(of: appState.presentingAddCameraForm) { _, present in
+            if present {
+                openOnboardingWindow()
+                appState.presentingAddCameraForm = false
+            }
         }
-        .sheet(isPresented: $appState.presentingSettings) {
-            SettingsSheet()
-                .environmentObject(appState)
+        .onChange(of: appState.presentingSettings) { _, present in
+            if present {
+                openSettingsWindow()
+                appState.presentingSettings = false
+            }
         }
         .onChange(of: appState.ringFocusedCameraId) { _, newValue in
             if let id = newValue,
@@ -31,6 +36,16 @@ public struct SnapshotPopoverView: View {
                 appState.ringFocusedCameraId = nil
             }
         }
+    }
+
+    private func openOnboardingWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        openWindow(id: "onboarding")
+    }
+
+    private func openSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        openWindow(id: "settings")
     }
 
     @ViewBuilder
@@ -65,10 +80,6 @@ public struct SnapshotPopoverView: View {
                 onAttach: { target in
                     Task { [weak appState] in
                         guard let appState else { return }
-                        let session = appState.streamViewModel
-                        _ = session
-                        // The view-model has already created the session; we hand the
-                        // render target through the camera's session via attachTarget.
                         await appState.streamViewModel.attachRenderTarget(target, to: camera.id)
                     }
                 }
@@ -95,7 +106,7 @@ public struct SnapshotPopoverView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white)
             Button {
-                appState.presentingAddCameraForm = true
+                openOnboardingWindow()
             } label: {
                 Text("Add your first camera")
                     .font(.system(size: 12, weight: .medium))
@@ -114,7 +125,7 @@ public struct SnapshotPopoverView: View {
             Spacer()
             HStack {
                 Button {
-                    appState.presentingSettings = true
+                    openSettingsWindow()
                 } label: {
                     Image(systemName: "gearshape")
                         .padding(8)
@@ -126,7 +137,7 @@ public struct SnapshotPopoverView: View {
                 Spacer()
 
                 Button {
-                    appState.presentingAddCameraForm = true
+                    openOnboardingWindow()
                 } label: {
                     Label("Add Camera", systemImage: "plus")
                         .font(.system(size: 11, weight: .medium))
@@ -141,12 +152,16 @@ public struct SnapshotPopoverView: View {
     }
 }
 
-/// Thin sheet wrapper that builds `SettingsViewModel` from `AppState`.
-struct SettingsSheet: View {
+/// Settings form with Save/Cancel footer — hosted by `SettingsWindowContent`
+/// (a real NSWindow, not a sheet — sheets inside the MenuBarExtra popover
+/// get dismissed when the popover loses key focus).
+public struct SettingsSheet: View {
     @EnvironmentObject private var appState: AppState
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismissWindow) private var dismissWindow
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         let viewModel = SettingsViewModel(
             settings: appState.settings,
             settingsService: appState.settingsService,
@@ -162,12 +177,12 @@ struct SettingsSheet: View {
             Divider()
             HStack {
                 Spacer()
-                Button("Cancel") { dismiss() }
+                Button("Cancel") { dismissWindow(id: "settings") }
                 Button("Save") {
                     try? viewModel.save()
                     appState.saveSettings(viewModel.settings)
                     appState.reloadCameras()
-                    dismiss()
+                    dismissWindow(id: "settings")
                 }
                 .keyboardShortcut(.return)
             }
