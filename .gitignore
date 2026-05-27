@@ -55,3 +55,7 @@ playground.xcworkspace
 # Temporary files
 *.tmp
 *.temp
+
+# Claude Code local state (skills restored from skills-lock.json on fresh checkout)
+.claude/
+.agents/
