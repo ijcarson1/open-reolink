@@ -94,10 +94,23 @@ public final class StreamViewModel: ObservableObject {
     }
 
     /// Hands a fresh render target (built by a SwiftUI representable) to the
-    /// session for that camera so playback can begin.
-    public func attachRenderTarget(_ target: StreamRenderTarget, to cameraId: UUID) async {
-        guard let session = sessions[cameraId] else { return }
-        try? await session.attach(to: target)
+    /// session for that camera so playback can begin. Creates the session on
+    /// demand if it doesn't already exist — covers the case where the tile
+    /// appears before `startGrid(...)` runs (e.g. when a new camera lands
+    /// while the popover is already open).
+    public func attachRenderTarget(_ target: StreamRenderTarget, to camera: Camera) async {
+        if sessions[camera.id] == nil {
+            startSession(for: camera, quality: .sub)
+        }
+        guard let session = sessions[camera.id] else {
+            NSLog("openReolink: attachRenderTarget failed — no session for \(camera.displayName)")
+            return
+        }
+        do {
+            try await session.attach(to: target)
+        } catch {
+            NSLog("openReolink: session.attach failed for \(camera.displayName): \(error)")
+        }
     }
 
     // Test-only accessors — needed by integration tests to inspect lifecycle.

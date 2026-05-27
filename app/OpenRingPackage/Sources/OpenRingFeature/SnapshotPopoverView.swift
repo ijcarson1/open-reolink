@@ -17,6 +17,13 @@ public struct SnapshotPopoverView: View {
         .frame(width: 520, height: 560)
         .onAppear { appState.popoverDidAppear() }
         .onDisappear { appState.popoverDidDisappear() }
+        .onChange(of: appState.cameras.map(\.id)) { _, _ in
+            // A camera was added or removed while the popover is open — restart
+            // streams so the new camera's session gets created. Without this the
+            // existing tiles' render targets sit idle because their `attach` ran
+            // before any session existed for them.
+            appState.popoverDidAppear()
+        }
         .onChange(of: appState.presentingAddCameraForm) { _, present in
             if present {
                 openOnboardingWindow()
@@ -80,7 +87,7 @@ public struct SnapshotPopoverView: View {
                 onAttach: { target in
                     Task { [weak appState] in
                         guard let appState else { return }
-                        await appState.streamViewModel.attachRenderTarget(target, to: camera.id)
+                        await appState.streamViewModel.attachRenderTarget(target, to: camera)
                     }
                 }
             )
