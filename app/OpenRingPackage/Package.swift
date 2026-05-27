@@ -29,7 +29,8 @@ let package = Package(
         .target(
             name: "Storage",
             dependencies: [
-                .product(name: "GRDB", package: "GRDB.swift")
+                "ReolinkClient",
+                .product(name: "GRDB", package: "GRDB.swift"),
             ]
         ),
 
@@ -45,6 +46,11 @@ let package = Package(
         .testTarget(
             name: "ReolinkClientTests",
             dependencies: ["ReolinkClient"]
+        ),
+
+        .testTarget(
+            name: "StorageTests",
+            dependencies: ["Storage", "ReolinkClient"]
         ),
 
         .testTarget(
