@@ -10,6 +10,7 @@ let package = Package(
         .library(name: "DesignSystem", targets: ["DesignSystem"]),
         .library(name: "ReolinkClient", targets: ["ReolinkClient"]),
         .library(name: "Storage", targets: ["Storage"]),
+        .library(name: "VisionProviders", targets: ["VisionProviders"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
@@ -35,11 +36,17 @@ let package = Package(
         ),
 
         .target(
+            name: "VisionProviders",
+            dependencies: []
+        ),
+
+        .target(
             name: "OpenRingFeature",
             dependencies: [
                 "DesignSystem",
                 "ReolinkClient",
                 "Storage",
+                "VisionProviders",
             ]
         ),
 
@@ -52,6 +59,12 @@ let package = Package(
         .testTarget(
             name: "StorageTests",
             dependencies: ["Storage", "ReolinkClient"]
+        ),
+
+        .testTarget(
+            name: "VisionProvidersTests",
+            dependencies: ["VisionProviders"],
+            resources: [.copy("Fixtures")]
         ),
 
         .testTarget(

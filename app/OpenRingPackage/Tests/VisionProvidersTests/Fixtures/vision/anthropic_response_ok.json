@@ -1,0 +1,11 @@
+{
+  "id": "msg_01ABCDEF",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {"type": "text", "text": "A person wearing a delivery uniform is at the door holding a parcel."}
+  ],
+  "model": "claude-sonnet-4-5",
+  "stop_reason": "end_turn",
+  "usage": {"input_tokens": 1042, "output_tokens": 22}
+}

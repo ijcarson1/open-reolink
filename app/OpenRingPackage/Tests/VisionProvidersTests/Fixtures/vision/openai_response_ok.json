@@ -1,0 +1,15 @@
+{
+  "id": "chatcmpl-abc",
+  "object": "chat.completion",
+  "model": "gpt-4o",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "A courier appears to be approaching the doorbell with a small package."
+      },
+      "finish_reason": "stop"
+    }
+  ]
+}
