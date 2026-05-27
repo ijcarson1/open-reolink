@@ -71,6 +71,7 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
             subject.send(.failed("Could not construct RTSP URL"))
             return
         }
+        NSLog("openReolink: starting \(quality.rawValue)-quality stream for \(camera.displayName) at \(url.absoluteString.replacingOccurrences(of: password, with: "***"))")
         let media = VLCMedia(url: url)
         // Reolink RTSP tuning (LAN-stable settings, established by trial against
         // the Duo 3 PoE / E1 Zoom / Video Doorbell PoE on the test fleet).
@@ -101,7 +102,7 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
         // demux close). Without this guard we'd double-schedule.
         if reconnectTask != nil { return }
         let delay = scheduler.nextDelay()
-        NSLog("openReolink: stream dropped for \(camera.displayName) (\(reason)); retrying in \(Int(delay))s")
+        NSLog("openReolink: [\(camera.displayName)/\(quality.rawValue)] stream dropped (\(reason)); retrying in \(Int(delay))s")
         subject.send(.reconnecting)
         // Tear down the stale player explicitly so VLC drops its half-closed
         // TCP session before we open a new one.
@@ -133,10 +134,13 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
 
     @MainActor
     private func handleStateChange(_ playerState: VLCMediaPlayerState) {
+        let name = "\(camera.displayName)/\(quality.rawValue)"
         switch playerState {
         case .opening, .buffering:
+            NSLog("openReolink: [\(name)] connecting")
             subject.send(.connecting)
         case .playing:
+            NSLog("openReolink: [\(name)] playing")
             hasReachedPlaying = true
             scheduler.reset()
             subject.send(.playing)
@@ -150,6 +154,7 @@ public final class ReolinkRTSPSession: NSObject, StreamSession, VLCMediaPlayerDe
             }
         case .error:
             let reason = VLCMediaPlayerStateToString(playerState)
+            NSLog("openReolink: [\(name)] error → \(reason)")
             subject.send(.failed("VLCKit reported \(reason)"))
             scheduleReconnect(reason: "error: \(reason)")
         case .esAdded:

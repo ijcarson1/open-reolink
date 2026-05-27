@@ -76,17 +76,26 @@ public struct CameraTileView: View {
 
     @ViewBuilder
     private var videoSurface: some View {
-        if let onAttach {
-            VLCVideoNSView(onReady: onAttach)
-        } else if let snapshot = lastSnapshot, let image = NSImage(data: snapshot) {
-            Image(nsImage: image)
-                .resizable()
-                .scaledToFill()
-        } else {
-            Image(systemName: "video")
-                .font(.system(size: isHero ? 44 : 22))
-                .foregroundStyle(.white.opacity(0.15))
+        ZStack {
+            // Snapshot underlay — visible until VLC paints frames over it.
+            // Keeps the tile from looking like a black hole during the ~1.5s
+            // RTSP warm-up, and gives the user something to look at if the
+            // live stream is permanently broken.
+            if let snapshot = lastSnapshot, let image = NSImage(data: snapshot) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Image(systemName: "video")
+                    .font(.system(size: isHero ? 44 : 22))
+                    .foregroundStyle(.white.opacity(0.15))
+            }
+
+            if let onAttach {
+                VLCVideoNSView(onReady: onAttach)
+            }
         }
+        .clipped()
     }
 
     private func offlinePlaceholder(message: String) -> some View {
